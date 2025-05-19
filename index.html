@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -95,7 +96,7 @@
 
   <script>
     const { Connection, PublicKey, clusterApiUrl, Transaction, SystemProgram } = solanaWeb3;
-const connection = new solanaWeb3.Connection("https://rpc.helius.xyz/?api-key=a0fbabbd-6313-4713-a2f6-a4d44e60588c");
+    const connection = new solanaWeb3.Connection("https://rpc.helius.xyz/?api-key=a0fbabbd-6313-4713-a2f6-a4d44e60588c");
 
     const FEE_WALLET = new PublicKey("Fuq2FiyF2Q28bVfumoiAhyBdDShty1fGNoUVXvZGrK5h");
     let box = null;
@@ -103,7 +104,7 @@ const connection = new solanaWeb3.Connection("https://rpc.helius.xyz/?api-key=a0
     const LOG = document.getElementById("log");
 
     function log(message) {
-      LOG.innerHTML = [${new Date().toLocaleTimeString()}] ${message}<br> + LOG.innerHTML;
+      LOG.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}<br>` + LOG.innerHTML;
     }
 
     async function depositTokens() {
@@ -121,11 +122,11 @@ const connection = new solanaWeb3.Connection("https://rpc.helius.xyz/?api-key=a0
         status: 'uncollapsed',
       };
 
-      document.getElementById("box-status").innerText = Box sealed at ${new Date(now).toLocaleTimeString()}.;
+      document.getElementById("box-status").innerText = `Box sealed at ${new Date(now).toLocaleTimeString()}.`;
 
       if (collapseTimer) clearInterval(collapseTimer);
       collapseTimer = setInterval(() => simulateCollapse(), 10000);
-      log(Deposited ${amount} fake tokens. Waiting for quantum collapse...);
+      log(`Deposited ${amount} fake tokens. Waiting for quantum collapse...`);
     }
 
     function simulateCollapse() {
@@ -141,7 +142,7 @@ const connection = new solanaWeb3.Connection("https://rpc.helius.xyz/?api-key=a0
       box.multiplier = reward;
       box.risk = risk;
 
-      log(Box is unstable... Risk: ${(risk * 100).toFixed(1)}%, Multiplier: x${reward.toFixed(2)});
+      log(`Box is unstable... Risk: ${(risk * 100).toFixed(1)}%, Multiplier: x${reward.toFixed(2)}`);
     }
 
     async function openBox() {
@@ -176,7 +177,7 @@ const connection = new solanaWeb3.Connection("https://rpc.helius.xyz/?api-key=a0
         const txid = await connection.sendRawTransaction(signed.serialize());
         await connection.confirmTransaction(txid);
 
-        log(✅ Fee paid. TX: <a href="https://solscan.io/tx/${txid}" target="_blank">${txid}</a>);
+        log(`✅ Fee paid. TX: <a href="https://solscan.io/tx/${txid}" target="_blank">${txid}</a>`);
 
         const collapseOutcome = Math.random() < box.risk;
         box.status = 'collapsed';
@@ -184,16 +185,16 @@ const connection = new solanaWeb3.Connection("https://rpc.helius.xyz/?api-key=a0
         clearInterval(collapseTimer);
 
         if (collapseOutcome) {
-          log(💀 Your box collapsed. Balance: 0 tokens.);
+          log(`💀 Your box collapsed. Balance: 0 tokens.`);
           document.getElementById("box-status").innerText = "Balance DEAD ☠️";
         } else {
           const finalAmount = Math.floor(box.deposit * box.multiplier);
-          log(🎉 Your box survived! Balance: ${finalAmount} tokens.);
-          document.getElementById("box-status").innerText = Balance ALIVE: ${finalAmount} tokens 💰;
+          log(`🎉 Your box survived! Balance: ${finalAmount} tokens.`);
+          document.getElementById("box-status").innerText = `Balance ALIVE: ${finalAmount} tokens 💰`;
         }
       } catch (err) {
         console.error(err);
-        log(❌ Transaction failed or rejected.);
+        log(`❌ Transaction failed or rejected.`);
       }
     }
   </script>
