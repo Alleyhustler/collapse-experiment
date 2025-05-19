@@ -300,13 +300,6 @@
       }
     }
 
-    header {
-      position: relative;
-      margin-bottom: 2rem;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 0.5rem;
-    }
-
     .top-right-logo {
       position: absolute;
       top: 0.01rem;
@@ -392,7 +385,7 @@
     async function depositTokens() {
       const amount = parseInt(document.getElementById("deposit").value);
       if (!amount || amount <= 0 || amount > 1_000_000_000) {
-        log("Invalid deposit amount.", 'error');
+        alert("Invalid deposit amount.");
         return;
       }
 
@@ -440,7 +433,7 @@
       }
 
       if (!window.solana || !window.solana.isPhantom) {
-        log("Please install Phantom Wallet to use this feature.", 'error');
+        alert("Please install Phantom Wallet to use this feature.");
         return;
       }
 
@@ -492,13 +485,13 @@
       } finally {
         // Reset button state
         const openBtn = document.querySelector('.btn-secondary');
-        openBtn.innerHTML = `Open the Box`;
+        openBtn.innerHTML = 'Open the Box';
         openBtn.disabled = false;
       }
     }
 
     // Initialize with a system log
-    log("Schrödinger's Coin protocol ready. Deposit tokens to begin.", 'info');
+    log("Quantum finance protocol ready. Deposit tokens to begin.", 'info');
   </script>
 </body>
 </html>
