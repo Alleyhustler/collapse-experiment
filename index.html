@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quantum Finance Experiment | Schrödinger's Coin</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
   <style>
     :root {
@@ -32,8 +32,7 @@
     }
 
     body {
-  font-family: "Space Grotesk", sans-serif;
-
+      font-family: "Space Grotesk", sans-serif;
       background: var(--background);
       color: var(--text-primary);
       line-height: 1.5;
@@ -49,12 +48,12 @@
       padding: 2rem 1rem;
     }
 
-header {
-  position: relative;
-  margin-bottom: 2rem;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 0.5rem; /* reduced padding */
-}
+    header {
+      position: relative;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
 
     h1 {
       font-size: 1.75rem;
@@ -114,8 +113,7 @@ header {
       border: 1px solid var(--border);
       border-radius: var(--border-radius);
       color: var(--text-primary);
-  font-family: "Space Grotesk", sans-serif;
-
+      font-family: "Space Grotesk", sans-serif;
       transition: var(--transition);
     }
 
@@ -206,8 +204,7 @@ header {
       height: 200px;
       overflow-y: auto;
       margin-top: 1.5rem;
-  font-family: "Space Grotesk", sans-serif;
-
+      font-family: "Space Grotesk", sans-serif;
       font-size: 0.8125rem;
       border: 1px solid var(--border);
     }
@@ -263,8 +260,7 @@ header {
       padding: 0.75rem;
       border-radius: var(--border-radius);
       margin-top: 1rem;
-  font-family: "Space Grotesk", sans-serif;
-
+      font-family: "Space Grotesk", sans-serif;
       font-size: 0.75rem;
       word-break: break-all;
       border: 1px solid var(--border);
@@ -303,36 +299,35 @@ header {
         padding: 1.25rem;
       }
     }
-header {
-  position: relative;
-  margin-bottom: 2rem;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 0.5rem; /* reduced padding */
-}
 
-.top-right-logo {
-  position: absolute;
-  top: 0.01rem;
-  right: 1rem;
-  z-index: 1000;
-}
+    header {
+      position: relative;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
 
-.top-right-logo img {
-  height: 90px;
-  width: auto;
-}
+    .top-right-logo {
+      position: absolute;
+      top: 0.01rem;
+      right: 1rem;
+      z-index: 1000;
+    }
 
+    .top-right-logo img {
+      height: 90px;
+      width: auto;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>Collapse Experiment</h1>
-      <p class="subtitle">Fun Coin Protocol</p>
-              <div class="top-right-logo">
-  <img src="image-removebg-preview.png" alt="Logo" />
-</div>
-
+      <h1>Schrödinger's Coin</h1>
+      <p class="subtitle">Is your balance alive... or dead?</p>
+      <div class="top-right-logo">
+        <img src="image-removebg-preview.png" alt="Logo" />
+      </div>
     </header>
 
     <main>
@@ -343,52 +338,50 @@ header {
 
         <div class="card-body">
           <div class="form-group">
-            <label for="deposit">Deposit Amount (1B supply)</label>
-            <input type="number" id="deposit" min="1" max="1000000000" placeholder="Enter token amount" />
+            <label for="deposit">Enter fake token deposit (from 1B supply)</label>
+            <input type="number" id="deposit" min="1" max="1000000000" placeholder="e.g., 10000" />
           </div>
 
-          <button class="btn btn-primary" onclick="depositTokens()">Initialize Quantum State</button>
+          <button class="btn btn-primary" onclick="depositTokens()">Deposit</button>
 
           <div id="box-status" class="status-indicator status-default">
             <div class="status-icon"></div>
-            <div class="status-text">Awaiting quantum state initialization</div>
+            <div class="status-text">No deposit yet</div>
           </div>
 
-          <button class="btn btn-secondary" onclick="openBox()">Collapse Quantum State</button>
+          <button class="btn btn-secondary" onclick="openBox()">Open the Box</button>
 
           <div class="log-container" id="log">
             <div class="log-entry">
               <span class="log-time">[System]</span>
-              <span class="log-message">Quantum finance protocol initialized</span>
+              <span class="log-message">Quantum experiment ready</span>
             </div>
           </div>
         </div>
       </div>
 
       <div class="footer">
-        <p>Transaction fee: 0.01 SOL</p>
-        <div class="fee-info">
-          Recipient: <code>Fuq2FiyF2Q28bVfumoiAhyBdDShty1fGNoUVXvZGrK5h</code>
-        </div>
+        <p>Fee: 0.01 SOL → <code>Fuq2FiyF2Q28bVfumoiAhyBdDShty1fGNoUVXvZGrK5h</code></p>
       </div>
     </main>
   </div>
 
   <script>
+    const { Connection, PublicKey, clusterApiUrl, Transaction, SystemProgram } = solanaWeb3;
     const connection = new solanaWeb3.Connection("https://rpc.helius.xyz/?api-key=a0fbabbd-6313-4713-a2f6-a4d44e60588c");
 
-    const FEE_WALLET = new solanaWeb3.PublicKey("Fuq2FiyF2Q28bVfumoiAhyBdDShty1fGNoUVXvZGrK5h");
+    const FEE_WALLET = new PublicKey("Fuq2FiyF2Q28bVfumoiAhyBdDShty1fGNoUVXvZGrK5h");
     let box = null;
     let collapseTimer = null;
     const LOG = document.getElementById("log");
 
-    function log(message, type = 'info') {
+    function log(message) {
       const time = new Date().toLocaleTimeString();
       const logEntry = document.createElement('div');
       logEntry.className = 'log-entry';
       logEntry.innerHTML = `
         <span class="log-time">[${time}]</span>
-        <span class="log-message log-${type}">${message}</span>
+        <span class="log-message">${message}</span>
       `;
       LOG.insertBefore(logEntry, LOG.firstChild);
       
@@ -399,7 +392,7 @@ header {
     async function depositTokens() {
       const amount = parseInt(document.getElementById("deposit").value);
       if (!amount || amount <= 0 || amount > 1_000_000_000) {
-        log("Invalid deposit amount. Must be between 1 and 1,000,000,000", 'error');
+        alert("Invalid deposit amount.");
         return;
       }
 
@@ -411,11 +404,11 @@ header {
         status: 'uncollapsed',
       };
 
-      updateStatus(`Quantum state initialized at ${new Date(now).toLocaleTimeString()}`, 'default');
+      document.getElementById("box-status").querySelector('.status-text').textContent = `Box sealed at ${new Date(now).toLocaleTimeString()}`;
 
       if (collapseTimer) clearInterval(collapseTimer);
       collapseTimer = setInterval(() => simulateCollapse(), 10000);
-      log(`Deposited ${amount.toLocaleString()} tokens. Quantum superposition established`, 'info');
+      log(`Deposited ${amount} fake tokens. Waiting for quantum collapse...`);
     }
 
     function simulateCollapse() {
@@ -431,35 +424,27 @@ header {
       box.multiplier = reward;
       box.risk = risk;
 
-      log(`Wavefunction instability: ${(risk * 100).toFixed(1)}% collapse probability | Potential gain: ${reward.toFixed(2)}x`, 'warning');
-    }
-
-    function updateStatus(text, state = 'default') {
-      const statusElement = document.getElementById("box-status");
-      statusElement.className = `status-indicator status-${state}`;
-      statusElement.querySelector('.status-text').textContent = text;
+      log(`Box is unstable... Risk: ${(risk * 100).toFixed(1)}%, Multiplier: x${reward.toFixed(2)}`);
     }
 
     async function openBox() {
       if (!box || box.status !== 'uncollapsed') {
-        log("No quantum state to collapse or observation already made", 'error');
+        log("No box to open or already opened.");
         return;
       }
 
       if (!window.solana || !window.solana.isPhantom) {
-        log("Phantom Wallet extension required for this operation", 'error');
+        alert("Please install Phantom Wallet to use this feature.");
         return;
       }
 
       try {
+        await window.solana.connect();
         const provider = window.solana;
-        if (!provider.isConnected) {
-          await provider.connect();
-        }
 
         const fromPubkey = provider.publicKey;
-        const transaction = new solanaWeb3.Transaction().add(
-          solanaWeb3.SystemProgram.transfer({
+        const transaction = new Transaction().add(
+          SystemProgram.transfer({
             fromPubkey,
             toPubkey: FEE_WALLET,
             lamports: 0.01 * 1e9 // 0.01 SOL
@@ -469,7 +454,7 @@ header {
         // Show loading state
         const openBtn = document.querySelector('.btn-secondary');
         const originalText = openBtn.innerHTML;
-        openBtn.innerHTML = `Processing <span class="spinner"></span>`;
+        openBtn.innerHTML = 'Processing <span class="spinner"></span>';
         openBtn.disabled = true;
 
         const { blockhash } = await connection.getRecentBlockhash();
@@ -480,34 +465,36 @@ header {
         const txid = await connection.sendRawTransaction(signed.serialize());
         await connection.confirmTransaction(txid);
 
-        log(`Transaction confirmed: <a href="https://solscan.io/tx/${txid}" target="_blank">${txid.slice(0, 12)}...</a>`, 'success');
+        log(`✅ Fee paid. TX: <a href="https://solscan.io/tx/${txid}" target="_blank">${txid}</a>`);
 
         const collapseOutcome = Math.random() < box.risk;
         box.status = 'collapsed';
 
         clearInterval(collapseTimer);
 
+        const statusElement = document.getElementById("box-status");
         if (collapseOutcome) {
-          log("Quantum collapse observed: Balance reduced to zero", 'error');
-          updateStatus("Wavefunction collapsed: Zero balance", 'dead');
+          log(`💀 Your box collapsed. Balance: 0 tokens.`);
+          statusElement.querySelector('.status-text').textContent = "Balance DEAD ☠️";
+          statusElement.className = "status-indicator status-dead";
+          statusElement.querySelector('.status-icon').style.background = "var(--danger)";
         } else {
           const finalAmount = Math.floor(box.deposit * box.multiplier);
-          log(`Observation successful: Final balance ${finalAmount.toLocaleString()} tokens`, 'success');
-          updateStatus(`Wavefunction preserved: ${finalAmount.toLocaleString()} tokens`, 'alive');
+          log(`🎉 Your box survived! Balance: ${finalAmount} tokens.`);
+          statusElement.querySelector('.status-text').textContent = `Balance ALIVE: ${finalAmount} tokens 💰`;
+          statusElement.className = "status-indicator status-alive";
+          statusElement.querySelector('.status-icon').style.background = "var(--success)";
         }
       } catch (err) {
         console.error(err);
-        log(`Transaction failed: ${err.message}`, 'error');
+        log(`❌ Transaction failed or rejected.`);
       } finally {
         // Reset button state
         const openBtn = document.querySelector('.btn-secondary');
-        openBtn.innerHTML = "Collapse Quantum State";
+        openBtn.innerHTML = 'Open the Box';
         openBtn.disabled = false;
       }
     }
-
-    // Initialize with a system log
-    log("Quantum finance protocol ready. Initialize token superposition to begin.", 'info');
   </script>
 </body>
 </html>
