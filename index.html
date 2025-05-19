@@ -300,13 +300,6 @@
       }
     }
 
-    header {
-      position: relative;
-      margin-bottom: 2rem;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 0.5rem;
-    }
-
     .top-right-logo {
       position: absolute;
       top: 0.01rem;
@@ -354,7 +347,7 @@
           <div class="log-container" id="log">
             <div class="log-entry">
               <span class="log-time">[System]</span>
-              <span class="log-message">Quantum experiment ready</span>
+              <span class="log-message">Quantum finance protocol initialized</span>
             </div>
           </div>
         </div>
@@ -375,13 +368,13 @@
     let collapseTimer = null;
     const LOG = document.getElementById("log");
 
-    function log(message) {
+    function log(message, type = 'info') {
       const time = new Date().toLocaleTimeString();
       const logEntry = document.createElement('div');
       logEntry.className = 'log-entry';
       logEntry.innerHTML = `
         <span class="log-time">[${time}]</span>
-        <span class="log-message">${message}</span>
+        <span class="log-message log-${type}">${message}</span>
       `;
       LOG.insertBefore(logEntry, LOG.firstChild);
       
@@ -404,11 +397,11 @@
         status: 'uncollapsed',
       };
 
-      document.getElementById("box-status").querySelector('.status-text').textContent = `Box sealed at ${new Date(now).toLocaleTimeString()}`;
+      updateStatus(`Box sealed at ${new Date(now).toLocaleTimeString()}`, 'default');
 
       if (collapseTimer) clearInterval(collapseTimer);
       collapseTimer = setInterval(() => simulateCollapse(), 10000);
-      log(`Deposited ${amount} fake tokens. Waiting for quantum collapse...`);
+      log(`Deposited ${amount} fake tokens. Waiting for quantum collapse...`, 'info');
     }
 
     function simulateCollapse() {
@@ -424,12 +417,18 @@
       box.multiplier = reward;
       box.risk = risk;
 
-      log(`Box is unstable... Risk: ${(risk * 100).toFixed(1)}%, Multiplier: x${reward.toFixed(2)}`);
+      log(`Box is unstable... Risk: ${(risk * 100).toFixed(1)}%, Multiplier: x${reward.toFixed(2)}`, 'warning');
+    }
+
+    function updateStatus(text, state = 'default') {
+      const statusElement = document.getElementById("box-status");
+      statusElement.className = `status-indicator status-${state}`;
+      statusElement.querySelector('.status-text').textContent = text;
     }
 
     async function openBox() {
       if (!box || box.status !== 'uncollapsed') {
-        log("No box to open or already opened.");
+        log("No box to open or already opened.", 'error');
         return;
       }
 
@@ -454,7 +453,7 @@
         // Show loading state
         const openBtn = document.querySelector('.btn-secondary');
         const originalText = openBtn.innerHTML;
-        openBtn.innerHTML = 'Processing <span class="spinner"></span>';
+        openBtn.innerHTML = `Processing <span class="spinner"></span>`;
         openBtn.disabled = true;
 
         const { blockhash } = await connection.getRecentBlockhash();
@@ -465,29 +464,24 @@
         const txid = await connection.sendRawTransaction(signed.serialize());
         await connection.confirmTransaction(txid);
 
-        log(`✅ Fee paid. TX: <a href="https://solscan.io/tx/${txid}" target="_blank">${txid}</a>`);
+        log(`✅ Fee paid. TX: <a href="https://solscan.io/tx/${txid}" target="_blank">${txid}</a>`, 'success');
 
         const collapseOutcome = Math.random() < box.risk;
         box.status = 'collapsed';
 
         clearInterval(collapseTimer);
 
-        const statusElement = document.getElementById("box-status");
         if (collapseOutcome) {
-          log(`💀 Your box collapsed. Balance: 0 tokens.`);
-          statusElement.querySelector('.status-text').textContent = "Balance DEAD ☠️";
-          statusElement.className = "status-indicator status-dead";
-          statusElement.querySelector('.status-icon').style.background = "var(--danger)";
+          log(`💀 Your box collapsed. Balance: 0 tokens.`, 'error');
+          updateStatus("Balance DEAD ☠️", 'dead');
         } else {
           const finalAmount = Math.floor(box.deposit * box.multiplier);
-          log(`🎉 Your box survived! Balance: ${finalAmount} tokens.`);
-          statusElement.querySelector('.status-text').textContent = `Balance ALIVE: ${finalAmount} tokens 💰`;
-          statusElement.className = "status-indicator status-alive";
-          statusElement.querySelector('.status-icon').style.background = "var(--success)";
+          log(`🎉 Your box survived! Balance: ${finalAmount} tokens.`, 'success');
+          updateStatus(`Balance ALIVE: ${finalAmount} tokens 💰`, 'alive');
         }
       } catch (err) {
         console.error(err);
-        log(`❌ Transaction failed or rejected.`);
+        log(`❌ Transaction failed or rejected.`, 'error');
       } finally {
         // Reset button state
         const openBtn = document.querySelector('.btn-secondary');
@@ -495,6 +489,9 @@
         openBtn.disabled = false;
       }
     }
+
+    // Initialize with a system log
+    log("Quantum finance protocol ready. Deposit tokens to begin.", 'info');
   </script>
 </body>
 </html>
