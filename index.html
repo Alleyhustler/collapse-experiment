@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Schrödinger Coin</title>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+
+  <!-- Solana -->
+  <script src="https://unpkg.com/@solana/web3.js@1.95.2/lib/index.iife.js"></script>
+
+  <style>
+    body {
+      background: #000;
+      color: #0f0;
+      font-family: monospace;
+      text-align: center;
+      padding: 50px;
+    }
+    button, input {
+      background: #111;
+      border: 1px solid #0f0;
+      color: #0f0;
+      padding: 10px;
+      margin: 10px;
+    }
+    button:hover {
+      background: #0f0;
+      color: #000;
+      cursor: pointer;
+    }
+    #status {
+      margin-top: 30px;
+      font-size: 1.3em;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>🧪 Schrödinger Coin</h1>
+  <p>Your tokens exist in both profit and loss... until you check.</p>
+
+  <button id="connectBtn">🔌 Connect Phantom</button>
+  <div id="wallet">Wallet not connected</div>
+
+  <input type="number" id="depositAmount" placeholder="Fake token amount" min="1"/>
+  <button id="depositBtn">📦 Deposit</button>
+  <button id="checkBtn">👁️ Open the Box</button>
+
+  <div id="status">Status: Awaiting quantum deposit...</div>
+
+  <script>
+    // === Firebase Config ===
+    const firebaseConfig = {
+      apiKey: "AIzaSyDoNaqf-JmcX8mVK_0efd1dzMmYY04SIdM",
+      authDomain: "degen-hunger.firebaseapp.com",
+      projectId: "degen-hunger",
+      storageBucket: "degen-hunger.appspot.com",
+      messagingSenderId: "133251693123",
+      appId: "1:133251693123:web:568deb489f4e49c5cef2f6",
+      measurementId: "G-FBXSKZRC5Q"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl("mainnet-beta"), "confirmed");
+    const FEE_ADDRESS = new solanaWeb3.PublicKey("Fuq2FiyF2Q28bVfumoiAhyBdDShty1fGNoUVXvZGrK5h");
+
+    let sessionId = crypto.randomUUID();
+    let walletAddress = null;
+
+    document.getElementById("connectBtn").addEventListener("click", async () => {
+      try {
+        const resp = await window.solana.connect();
+        walletAddress = resp.publicKey.toString();
+        document.getElementById("wallet").innerText = `Connected: ${walletAddress}`;
+      } catch (e) {
+        alert("Phantom wallet required.");
+      }
+    });
+
+    document.getElementById("depositBtn").addEventListener("click", async () => {
+      const amount = parseInt(document.getElementById("depositAmount").value);
+      if (!walletAddress) return alert("Connect wallet first.");
+      if (amount <= 0) return alert("Enter a valid amount.");
+
+      const startTime = Date.now();
+      await db.collection("sessions").doc(sessionId).set({
+        wallet: walletAddress,
+        balance: amount,
+        start: startTime,
+        status: "alive"
+      });
+
+      document.getElementById("status").innerText = `🎲 Box created with ${amount} fake tokens... Quantum chaos awaits.`;
+    });
+
+    document.getElementById("checkBtn").addEventListener("click", async () => {
+      const ref = db.collection("sessions").doc(sessionId);
+      const snap = await ref.get();
+      if (!snap.exists) return alert("No session found.");
+
+      const session = snap.data();
+      const now = Date.now();
+      const minutes = Math.floor((now - session.start) / 60000);
+      const multiplier = Math.min(2 ** minutes, 256);
+      const rng = Math.random() < 0.5 ? 0 : session.balance * multiplier;
+
+      const fee = 0.01;
+      const finalBalance = Math.max(rng - fee, 0);
+
+      const tx = new solanaWeb3.Transaction().add(
+        solanaWeb3.SystemProgram.transfer({
+          fromPubkey: new solanaWeb3.PublicKey(walletAddress),
+          toPubkey: FEE_ADDRESS,
+          lamports: 0.01 * solanaWeb3.LAMPORTS_PER_SOL,
+        })
+      );
+      tx.feePayer = new solanaWeb3.PublicKey(walletAddress);
+      tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+      try {
+        const signed = await window.solana.signTransaction(tx);
+        const sig = await connection.sendRawTransaction(signed.serialize());
+        await connection.confirmTransaction(sig);
+
+        await ref.update({
+          status: "observed",
+          end: now,
+          multiplier,
+          fee,
+          result: finalBalance,
+          txId: sig
+        });
+
+        document.getElementById("status").innerText = rng === 0
+          ? `💀 Collapsed. You got nothing. Fee paid.`
+          : `🧬 Success! Final balance: ${finalBalance.toFixed(2)} (x${multiplier})`;
+      } catch (err) {
+        alert("Transaction failed: " + err.message);
+      }
+    });
+  </script>
+</body>
+</html>
