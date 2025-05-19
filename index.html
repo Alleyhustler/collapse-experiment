@@ -375,6 +375,14 @@ header {
   </div>
 
   <script>
+    // Check if Phantom wallet is installed
+    function checkPhantom() {
+      if (window.solana && window.solana.isPhantom) {
+        return window.solana;
+      }
+      return null;
+    }
+
     const { Connection, PublicKey, clusterApiUrl, Transaction, SystemProgram } = solanaWeb3;
     const connection = new solanaWeb3.Connection("https://rpc.helius.xyz/?api-key=a0fbabbd-6313-4713-a2f6-a4d44e60588c");
 
@@ -425,7 +433,6 @@ header {
       const now = Date.now();
       const secondsElapsed = Math.floor((now - box.startTime) / 1000);
 
-      const chance = Math.random();
       const risk = Math.min(0.1 + secondsElapsed / 600, 0.9);
       const reward = 1 + secondsElapsed / 300;
 
@@ -447,15 +454,18 @@ header {
         return;
       }
 
-      if (!window.solana || !window.solana.isPhantom) {
+      const provider = checkPhantom();
+      if (!provider) {
         log("Phantom Wallet extension required for this operation", 'error');
+        alert("Please install Phantom Wallet to use this feature.");
         return;
       }
 
       try {
-        const provider = window.solana;
+        // Connect to wallet if not already connected
         if (!provider.isConnected) {
           await provider.connect();
+          log("Connected to Phantom Wallet", 'success');
         }
 
         const fromPubkey = provider.publicKey;
