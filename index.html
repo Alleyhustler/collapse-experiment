@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Schrödinger's Bag</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Schrödinger's Bag - Solana Memecoin Experiment</title>
   <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@latest/lib/index.iife.min.js"></script>
   <style>
     body {
@@ -34,86 +34,112 @@
       border-radius: 8px;
       width: 100%;
       margin-bottom: 1rem;
-    }
-    input {
       background: #222;
       border: 1px solid #00ff99;
       color: #00ff99;
+      box-sizing: border-box;
     }
     button {
+      cursor: pointer;
+      border: none;
       background: #00ff99;
       color: #000;
-      border: none;
-      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s ease;
     }
-    .log { white-space: pre-wrap; margin-top: 1rem; }
+    button:hover {
+      background: #00cc77;
+    }
+    .log { white-space: pre-wrap; margin-top: 1rem; min-height: 60px; }
+    #walletAddress {
+      font-size: 0.85rem;
+      color: #aaa;
+      margin-bottom: 1rem;
+      word-break: break-all;
+    }
   </style>
 </head>
 <body>
   <h1>🐱 Schrödinger's Bag</h1>
   <div class="box">
     <button onclick="connectWallet()">Connect Wallet</button>
-    <p id="walletAddress" style="font-size: 0.85rem; color:#ccc;">Wallet not connected</p>
-    <input type="number" id="amount" placeholder="Enter amount to deposit" />
+    <p id="walletAddress">Wallet not connected</p>
+
+    <input type="number" id="amount" placeholder="Enter amount to deposit" min="0.0001" step="0.0001" />
     <button onclick="deposit()">Deposit</button>
+
     <p><strong>Timer:</strong> <span id="timer">--:--</span></p>
-    <p><strong>Multiplier:</strong> <span id="multiplier">1.0x</span></p>
+    <p><strong>Multiplier:</strong> <span id="multiplier">1.00x</span></p>
+
     <button onclick="openBox()">Open the Box 🧪</button>
+
     <div class="log" id="log"></div>
+
     <p style="margin-top:1rem; font-size: 0.85rem; color:#aaa;">
-      Fee: 0.01 SOL sent to <br><strong>Fuq2FiyF2Q28bVfumoiAhyBdDShty1fGNoUVXvZGrK5h</strong>
+      Fee: 0.01 SOL sent to<br>
+      <strong>Fuq2FiyF2Q28bVfumoiAhyBdDShty1fGNoUVXvZGrK5h</strong>
     </p>
   </div>
 
   <script>
-    const solanaWeb3 = window.solanaWeb3;
+    // Use solana web3 from the global window object
+    const solana = window.solanaWeb3;
+
     let provider = null;
     let wallet = null;
     const feeReceiver = "Fuq2FiyF2Q28bVfumoiAhyBdDShty1fGNoUVXvZGrK5h";
+
     let balance = 0;
     let multiplier = 1.0;
     let timer = 600;
     let interval = null;
 
-    async function connectWallet() {
+    window.connectWallet = async function() {
       try {
         if (window.solana && window.solana.isPhantom) {
           provider = window.solana;
         } else if (window.solflare) {
           provider = window.solflare;
         } else {
-          alert("No wallet found! Install Phantom or Solflare.");
+          alert("No wallet found! Please install Phantom or Solflare.");
           return;
         }
 
         const res = await provider.connect();
         wallet = res.publicKey;
         document.getElementById("walletAddress").textContent = "Connected: " + wallet.toString();
-        log("Wallet connected.");
+        log("✅ Wallet connected.");
       } catch (err) {
-        log("Wallet connection failed.");
+        log("❌ Wallet connection failed.");
       }
-    }
+    };
 
-    function deposit() {
-      const amount = parseFloat(document.getElementById("amount").value);
+    window.deposit = function() {
+      const amountInput = document.getElementById("amount");
+      const amount = parseFloat(amountInput.value);
       if (isNaN(amount) || amount <= 0) {
-        log("Invalid amount.");
+        log("❌ Invalid amount. Please enter a positive number.");
         return;
       }
 
       balance = amount;
       multiplier = 1.0;
       timer = 600;
-      log(`Deposited ${amount} fake tokens. Wait to increase multiplier or open early.`);
+
+      log(`🪙 Deposited ${amount} fake tokens. Timer started.`);
+
+      // Reset timer display and multiplier
+      document.getElementById("timer").textContent = formatTime(timer);
+      document.getElementById("multiplier").textContent = multiplier.toFixed(2) + "x";
 
       if (interval) clearInterval(interval);
       interval = setInterval(tick, 1000);
-    }
+    };
 
     function tick() {
       timer--;
-      multiplier += 0.005;
+      multiplier += 0.005; // Increase multiplier every second
+
       document.getElementById("timer").textContent = formatTime(timer);
       document.getElementById("multiplier").textContent = multiplier.toFixed(2) + "x";
 
@@ -123,65 +149,70 @@
       }
     }
 
-    function formatTime(s) {
-      const m = Math.floor(s / 60);
-      const sec = s % 60;
-      return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
     }
 
     function collapse() {
       const fate = Math.random();
       if (fate < 0.5) {
         balance = 0;
-        log("😿 The box collapsed. Your balance is now 0.");
+        log("💥 The box collapsed! Your balance is now 0.");
       } else {
         balance *= multiplier;
-        log(`😺 Lucky! Your balance is now ${balance.toFixed(2)}.`);
+        log(`🎉 Lucky! Your balance doubled to ${balance.toFixed(2)}.`);
       }
+      resetState();
     }
 
-    async function openBox() {
+    window.openBox = async function() {
       if (!wallet) {
-        log("Please connect a wallet first.");
+        log("⚠️ Please connect your wallet first.");
         return;
       }
-
       if (balance === 0) {
-        log("No balance to check. Deposit first.");
+        log("⚠️ No balance in the box. Deposit first.");
         return;
       }
 
       const fate = Math.random();
       let finalBalance = 0;
-
       if (fate < 0.5) {
         finalBalance = 0;
-        log("😿 RIP. Your balance is gone.");
+        log("☠️ Bad luck! Your balance went to zero.");
       } else {
         finalBalance = balance * multiplier;
-        log(`😺 You got ${finalBalance.toFixed(2)} fake tokens.`);
+        log(`💰 Congrats! You got ${finalBalance.toFixed(2)} fake tokens.`);
       }
 
+      // Send fee 0.01 SOL
       await sendFee();
 
+      resetState();
+    };
+
+    function resetState() {
       balance = 0;
       multiplier = 1.0;
       timer = 600;
       clearInterval(interval);
       document.getElementById("timer").textContent = "--:--";
-      document.getElementById("multiplier").textContent = "1.0x";
+      document.getElementById("multiplier").textContent = "1.00x";
     }
 
     async function sendFee() {
       try {
-        const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl("mainnet-beta"));
-        const transaction = new solanaWeb3.Transaction().add(
-          solanaWeb3.SystemProgram.transfer({
+        const connection = new solana.Connection(solana.clusterApiUrl("mainnet-beta"));
+        const transaction = new solana.Transaction().add(
+          solana.SystemProgram.transfer({
             fromPubkey: wallet,
-            toPubkey: new solanaWeb3.PublicKey(feeReceiver),
-            lamports: solanaWeb3.LAMPORTS_PER_SOL * 0.01
+            toPubkey: new solana.PublicKey(feeReceiver),
+            lamports: solana.LAMPORTS_PER_SOL * 0.01,
           })
         );
+
         transaction.feePayer = wallet;
         const { blockhash } = await connection.getLatestBlockhash();
         transaction.recentBlockhash = blockhash;
@@ -189,9 +220,11 @@
         const signed = await provider.signTransaction(transaction);
         const signature = await connection.sendRawTransaction(signed.serialize());
         await connection.confirmTransaction(signature);
+
         log(`✅ Fee of 0.01 SOL sent. Tx: https://solscan.io/tx/${signature}`);
       } catch (err) {
-        log("❌ Failed to send fee. Try again.");
+        console.error(err);
+        log("❌ Failed to send fee. Make sure you have enough SOL.");
       }
     }
 
