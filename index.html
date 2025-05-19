@@ -3,147 +3,201 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Schrödinger Coin</title>
-
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
-
-  <!-- Solana -->
-  <script src="https://unpkg.com/@solana/web3.js@1.95.2/lib/index.iife.js"></script>
-
+  <title>Schrödinger's Bag</title>
+  <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@latest/lib/index.iife.min.js"></script>
   <style>
     body {
-      background: #000;
-      color: #0f0;
-      font-family: monospace;
-      text-align: center;
-      padding: 50px;
+      background: #0d0d0d;
+      font-family: 'Courier New', Courier, monospace;
+      color: #00ff99;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      padding: 2rem;
     }
-    button, input {
+    h1 { font-size: 2rem; margin-bottom: 1rem; }
+    .box {
       background: #111;
-      border: 1px solid #0f0;
-      color: #0f0;
-      padding: 10px;
-      margin: 10px;
+      border: 2px solid #00ff99;
+      padding: 1.5rem;
+      border-radius: 12px;
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+      margin-top: 1rem;
     }
-    button:hover {
-      background: #0f0;
+    input, button {
+      padding: 0.75rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      width: 100%;
+      margin-bottom: 1rem;
+    }
+    input {
+      background: #222;
+      border: 1px solid #00ff99;
+      color: #00ff99;
+    }
+    button {
+      background: #00ff99;
       color: #000;
+      border: none;
       cursor: pointer;
     }
-    #status {
-      margin-top: 30px;
-      font-size: 1.3em;
-    }
+    .log { white-space: pre-wrap; margin-top: 1rem; }
   </style>
 </head>
-
 <body>
-  <h1>🧪 Schrödinger Coin</h1>
-  <p>Your tokens exist in both profit and loss... until you check.</p>
-
-  <button id="connectBtn">🔌 Connect Phantom</button>
-  <div id="wallet">Wallet not connected</div>
-
-  <input type="number" id="depositAmount" placeholder="Fake token amount" min="1"/>
-  <button id="depositBtn">📦 Deposit</button>
-  <button id="checkBtn">👁️ Open the Box</button>
-
-  <div id="status">Status: Awaiting quantum deposit...</div>
+  <h1>🐱 Schrödinger's Bag</h1>
+  <div class="box">
+    <button onclick="connectWallet()">Connect Wallet</button>
+    <p id="walletAddress" style="font-size: 0.85rem; color:#ccc;">Wallet not connected</p>
+    <input type="number" id="amount" placeholder="Enter amount to deposit" />
+    <button onclick="deposit()">Deposit</button>
+    <p><strong>Timer:</strong> <span id="timer">--:--</span></p>
+    <p><strong>Multiplier:</strong> <span id="multiplier">1.0x</span></p>
+    <button onclick="openBox()">Open the Box 🧪</button>
+    <div class="log" id="log"></div>
+    <p style="margin-top:1rem; font-size: 0.85rem; color:#aaa;">
+      Fee: 0.01 SOL sent to <br><strong>Fuq2FiyF2Q28bVfumoiAhyBdDShty1fGNoUVXvZGrK5h</strong>
+    </p>
+  </div>
 
   <script>
-    // === Firebase Config ===
-    const firebaseConfig = {
-      apiKey: "AIzaSyDoNaqf-JmcX8mVK_0efd1dzMmYY04SIdM",
-      authDomain: "degen-hunger.firebaseapp.com",
-      projectId: "degen-hunger",
-      storageBucket: "degen-hunger.appspot.com",
-      messagingSenderId: "133251693123",
-      appId: "1:133251693123:web:568deb489f4e49c5cef2f6",
-      measurementId: "G-FBXSKZRC5Q"
-    };
+    const solanaWeb3 = window.solanaWeb3;
+    let provider = null;
+    let wallet = null;
+    const feeReceiver = "Fuq2FiyF2Q28bVfumoiAhyBdDShty1fGNoUVXvZGrK5h";
+    let balance = 0;
+    let multiplier = 1.0;
+    let timer = 600;
+    let interval = null;
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl("mainnet-beta"), "confirmed");
-    const FEE_ADDRESS = new solanaWeb3.PublicKey("Fuq2FiyF2Q28bVfumoiAhyBdDShty1fGNoUVXvZGrK5h");
-
-    let sessionId = crypto.randomUUID();
-    let walletAddress = null;
-
-    document.getElementById("connectBtn").addEventListener("click", async () => {
+    async function connectWallet() {
       try {
-        const resp = await window.solana.connect();
-        walletAddress = resp.publicKey.toString();
-        document.getElementById("wallet").innerText = `Connected: ${walletAddress}`;
-      } catch (e) {
-        alert("Phantom wallet required.");
-      }
-    });
+        if (window.solana && window.solana.isPhantom) {
+          provider = window.solana;
+        } else if (window.solflare) {
+          provider = window.solflare;
+        } else {
+          alert("No wallet found! Install Phantom or Solflare.");
+          return;
+        }
 
-    document.getElementById("depositBtn").addEventListener("click", async () => {
-      const amount = parseInt(document.getElementById("depositAmount").value);
-      if (!walletAddress) return alert("Connect wallet first.");
-      if (amount <= 0) return alert("Enter a valid amount.");
-
-      const startTime = Date.now();
-      await db.collection("sessions").doc(sessionId).set({
-        wallet: walletAddress,
-        balance: amount,
-        start: startTime,
-        status: "alive"
-      });
-
-      document.getElementById("status").innerText = `🎲 Box created with ${amount} fake tokens... Quantum chaos awaits.`;
-    });
-
-    document.getElementById("checkBtn").addEventListener("click", async () => {
-      const ref = db.collection("sessions").doc(sessionId);
-      const snap = await ref.get();
-      if (!snap.exists) return alert("No session found.");
-
-      const session = snap.data();
-      const now = Date.now();
-      const minutes = Math.floor((now - session.start) / 60000);
-      const multiplier = Math.min(2 ** minutes, 256);
-      const rng = Math.random() < 0.5 ? 0 : session.balance * multiplier;
-
-      const fee = 0.01;
-      const finalBalance = Math.max(rng - fee, 0);
-
-      const tx = new solanaWeb3.Transaction().add(
-        solanaWeb3.SystemProgram.transfer({
-          fromPubkey: new solanaWeb3.PublicKey(walletAddress),
-          toPubkey: FEE_ADDRESS,
-          lamports: 0.01 * solanaWeb3.LAMPORTS_PER_SOL,
-        })
-      );
-      tx.feePayer = new solanaWeb3.PublicKey(walletAddress);
-      tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-
-      try {
-        const signed = await window.solana.signTransaction(tx);
-        const sig = await connection.sendRawTransaction(signed.serialize());
-        await connection.confirmTransaction(sig);
-
-        await ref.update({
-          status: "observed",
-          end: now,
-          multiplier,
-          fee,
-          result: finalBalance,
-          txId: sig
-        });
-
-        document.getElementById("status").innerText = rng === 0
-          ? `💀 Collapsed. You got nothing. Fee paid.`
-          : `🧬 Success! Final balance: ${finalBalance.toFixed(2)} (x${multiplier})`;
+        const res = await provider.connect();
+        wallet = res.publicKey;
+        document.getElementById("walletAddress").textContent = "Connected: " + wallet.toString();
+        log("Wallet connected.");
       } catch (err) {
-        alert("Transaction failed: " + err.message);
+        log("Wallet connection failed.");
       }
-    });
+    }
+
+    function deposit() {
+      const amount = parseFloat(document.getElementById("amount").value);
+      if (isNaN(amount) || amount <= 0) {
+        log("Invalid amount.");
+        return;
+      }
+
+      balance = amount;
+      multiplier = 1.0;
+      timer = 600;
+      log(`Deposited ${amount} fake tokens. Wait to increase multiplier or open early.`);
+
+      if (interval) clearInterval(interval);
+      interval = setInterval(tick, 1000);
+    }
+
+    function tick() {
+      timer--;
+      multiplier += 0.005;
+      document.getElementById("timer").textContent = formatTime(timer);
+      document.getElementById("multiplier").textContent = multiplier.toFixed(2) + "x";
+
+      if (timer <= 0) {
+        collapse();
+        clearInterval(interval);
+      }
+    }
+
+    function formatTime(s) {
+      const m = Math.floor(s / 60);
+      const sec = s % 60;
+      return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+    }
+
+    function collapse() {
+      const fate = Math.random();
+      if (fate < 0.5) {
+        balance = 0;
+        log("😿 The box collapsed. Your balance is now 0.");
+      } else {
+        balance *= multiplier;
+        log(`😺 Lucky! Your balance is now ${balance.toFixed(2)}.`);
+      }
+    }
+
+    async function openBox() {
+      if (!wallet) {
+        log("Please connect a wallet first.");
+        return;
+      }
+
+      if (balance === 0) {
+        log("No balance to check. Deposit first.");
+        return;
+      }
+
+      const fate = Math.random();
+      let finalBalance = 0;
+
+      if (fate < 0.5) {
+        finalBalance = 0;
+        log("😿 RIP. Your balance is gone.");
+      } else {
+        finalBalance = balance * multiplier;
+        log(`😺 You got ${finalBalance.toFixed(2)} fake tokens.`);
+      }
+
+      await sendFee();
+
+      balance = 0;
+      multiplier = 1.0;
+      timer = 600;
+      clearInterval(interval);
+      document.getElementById("timer").textContent = "--:--";
+      document.getElementById("multiplier").textContent = "1.0x";
+    }
+
+    async function sendFee() {
+      try {
+        const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl("mainnet-beta"));
+        const transaction = new solanaWeb3.Transaction().add(
+          solanaWeb3.SystemProgram.transfer({
+            fromPubkey: wallet,
+            toPubkey: new solanaWeb3.PublicKey(feeReceiver),
+            lamports: solanaWeb3.LAMPORTS_PER_SOL * 0.01
+          })
+        );
+        transaction.feePayer = wallet;
+        const { blockhash } = await connection.getLatestBlockhash();
+        transaction.recentBlockhash = blockhash;
+
+        const signed = await provider.signTransaction(transaction);
+        const signature = await connection.sendRawTransaction(signed.serialize());
+        await connection.confirmTransaction(signature);
+        log(`✅ Fee of 0.01 SOL sent. Tx: https://solscan.io/tx/${signature}`);
+      } catch (err) {
+        log("❌ Failed to send fee. Try again.");
+      }
+    }
+
+    function log(msg) {
+      document.getElementById("log").textContent = msg;
+    }
   </script>
 </body>
 </html>
