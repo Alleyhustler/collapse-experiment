@@ -2,234 +2,199 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Schrödinger's Bag - Solana Memecoin Experiment</title>
-  <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Schrödinger's Coin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet"/>
+  <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
   <style>
     body {
-      background: #0d0d0d;
-      font-family: 'Courier New', Courier, monospace;
-      color: #00ff99;
+      margin: 0;
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(135deg, #000000, #111111, #222222);
+      color: #00ffcc;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
-      min-height: 100vh;
       padding: 2rem;
     }
-    h1 { font-size: 2rem; margin-bottom: 1rem; }
-    .box {
-      background: #111;
-      border: 2px solid #00ff99;
-      padding: 1.5rem;
-      border-radius: 12px;
-      text-align: center;
-      max-width: 400px;
-      width: 100%;
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    #box-status {
       margin-top: 1rem;
+      font-size: 1.2rem;
     }
-    input, button {
-      padding: 0.75rem;
-      font-size: 1rem;
-      border-radius: 8px;
+
+    .container {
+      background: #1a1a1a;
+      padding: 2rem;
+      border-radius: 20px;
+      box-shadow: 0 0 15px #00ffcc33;
+      max-width: 500px;
       width: 100%;
-      margin-bottom: 1rem;
-      background: #222;
-      border: 1px solid #00ff99;
-      color: #00ff99;
-      box-sizing: border-box;
+      margin-top: 2rem;
     }
-    button {
-      cursor: pointer;
+
+    input, button {
+      padding: 0.7rem;
+      font-size: 1rem;
+      margin: 0.5rem 0;
+      width: 100%;
       border: none;
-      background: #00ff99;
+      border-radius: 10px;
+      background-color: #111;
+      color: #00ffcc;
+    }
+
+    button {
+      background: #00ffcc;
       color: #000;
       font-weight: bold;
-      transition: background 0.3s ease;
+      cursor: pointer;
     }
-    button:hover {
-      background: #00cc77;
+
+    #log {
+      background: #000000aa;
+      padding: 1rem;
+      margin-top: 1rem;
+      height: 150px;
+      overflow-y: auto;
+      font-size: 0.9rem;
+      border-radius: 10px;
     }
-    .log { white-space: pre-wrap; margin-top: 1rem; min-height: 60px; }
-    #walletAddress {
-      font-size: 0.85rem;
-      color: #aaa;
-      margin-bottom: 1rem;
-      word-break: break-all;
+
+    .footer {
+      margin-top: 2rem;
+      font-size: 0.8rem;
+      color: #999;
     }
   </style>
 </head>
 <body>
-  <h1>🐱 Schrödinger's Bag</h1>
-  <div class="box">
-    <button onclick="connectWallet()">Connect Wallet</button>
-    <p id="walletAddress">Wallet not connected</p>
 
-    <input type="number" id="amount" placeholder="Enter amount to deposit" min="0.0001" step="0.0001" />
-    <button onclick="deposit()">Deposit</button>
+  <h1>Schrödinger's Coin</h1>
+  <p>Is your balance alive... or dead?</p>
 
-    <p><strong>Timer:</strong> <span id="timer">--:--</span></p>
-    <p><strong>Multiplier:</strong> <span id="multiplier">1.00x</span></p>
+  <div class="container">
+    <label for="deposit">Enter fake token deposit (from 1B supply):</label>
+    <input type="number" id="deposit" min="1" max="1000000000" placeholder="e.g., 10000" />
 
-    <button onclick="openBox()">Open the Box 🧪</button>
+    <button onclick="depositTokens()">Deposit</button>
+    <div id="box-status">No deposit yet.</div>
 
-    <div class="log" id="log"></div>
+    <button onclick="openBox()">Open the Box</button>
+    <div id="log"></div>
+  </div>
 
-    <p style="margin-top:1rem; font-size: 0.85rem; color:#aaa;">
-      Fee: 0.01 SOL sent to<br>
-      <strong>Fuq2FiyF2Q28bVfumoiAhyBdDShty1fGNoUVXvZGrK5h</strong>
-    </p>
+  <div class="footer">
+    Fee: 0.01 SOL → <code>Fuq2FiyF2Q28bVfumoiAhyBdDShty1fGNoUVXvZGrK5h</code>
   </div>
 
   <script>
-    // Use solana web3 from the global window object
-    const solana = window.solanaWeb3;
+    const { Connection, PublicKey, clusterApiUrl, Transaction, SystemProgram } = solanaWeb3;
+    const connection = new Connection(clusterApiUrl('mainnet-beta'));
 
-    let provider = null;
-    let wallet = null;
-    const feeReceiver = "Fuq2FiyF2Q28bVfumoiAhyBdDShty1fGNoUVXvZGrK5h";
+    const FEE_WALLET = new PublicKey("Fuq2FiyF2Q28bVfumoiAhyBdDShty1fGNoUVXvZGrK5h");
+    let box = null;
+    let collapseTimer = null;
+    const LOG = document.getElementById("log");
 
-    let balance = 0;
-    let multiplier = 1.0;
-    let timer = 600;
-    let interval = null;
+    function log(message) {
+      LOG.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}<br>` + LOG.innerHTML;
+    }
 
-    window.connectWallet = async function() {
+    async function depositTokens() {
+      const amount = parseInt(document.getElementById("deposit").value);
+      if (!amount || amount <= 0 || amount > 1_000_000_000) {
+        alert("Invalid deposit amount.");
+        return;
+      }
+
+      const now = Date.now();
+      box = {
+        deposit: amount,
+        startTime: now,
+        multiplier: 1,
+        status: 'uncollapsed',
+      };
+
+      document.getElementById("box-status").innerText = `Box sealed at ${new Date(now).toLocaleTimeString()}.`;
+
+      if (collapseTimer) clearInterval(collapseTimer);
+      collapseTimer = setInterval(() => simulateCollapse(), 10000);
+      log(`Deposited ${amount} fake tokens. Waiting for quantum collapse...`);
+    }
+
+    function simulateCollapse() {
+      if (!box || box.status !== 'uncollapsed') return;
+
+      const now = Date.now();
+      const secondsElapsed = Math.floor((now - box.startTime) / 1000);
+
+      const chance = Math.random();
+      const risk = Math.min(0.1 + secondsElapsed / 600, 0.9);
+      const reward = 1 + secondsElapsed / 300;
+
+      box.multiplier = reward;
+      box.risk = risk;
+
+      log(`Box is unstable... Risk: ${(risk * 100).toFixed(1)}%, Multiplier: x${reward.toFixed(2)}`);
+    }
+
+    async function openBox() {
+      if (!box || box.status !== 'uncollapsed') {
+        log("No box to open or already opened.");
+        return;
+      }
+
+      if (!window.solana || !window.solana.isPhantom) {
+        alert("Please install Phantom Wallet to use this feature.");
+        return;
+      }
+
       try {
-        if (window.solana && window.solana.isPhantom) {
-          provider = window.solana;
-        } else if (window.solflare) {
-          provider = window.solflare;
-        } else {
-          alert("No wallet found! Please install Phantom or Solflare.");
-          return;
-        }
+        await window.solana.connect();
+        const provider = window.solana;
 
-        const res = await provider.connect();
-        wallet = res.publicKey;
-        document.getElementById("walletAddress").textContent = "Connected: " + wallet.toString();
-        log("✅ Wallet connected.");
-      } catch (err) {
-        log("❌ Wallet connection failed.");
-      }
-    };
-
-    window.deposit = function() {
-      const amountInput = document.getElementById("amount");
-      const amount = parseFloat(amountInput.value);
-      if (isNaN(amount) || amount <= 0) {
-        log("❌ Invalid amount. Please enter a positive number.");
-        return;
-      }
-
-      balance = amount;
-      multiplier = 1.0;
-      timer = 600;
-
-      log(`🪙 Deposited ${amount} fake tokens. Timer started.`);
-
-      // Reset timer display and multiplier
-      document.getElementById("timer").textContent = formatTime(timer);
-      document.getElementById("multiplier").textContent = multiplier.toFixed(2) + "x";
-
-      if (interval) clearInterval(interval);
-      interval = setInterval(tick, 1000);
-    };
-
-    function tick() {
-      timer--;
-      multiplier += 0.005; // Increase multiplier every second
-
-      document.getElementById("timer").textContent = formatTime(timer);
-      document.getElementById("multiplier").textContent = multiplier.toFixed(2) + "x";
-
-      if (timer <= 0) {
-        collapse();
-        clearInterval(interval);
-      }
-    }
-
-    function formatTime(seconds) {
-      const m = Math.floor(seconds / 60);
-      const s = seconds % 60;
-      return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-    }
-
-    function collapse() {
-      const fate = Math.random();
-      if (fate < 0.5) {
-        balance = 0;
-        log("💥 The box collapsed! Your balance is now 0.");
-      } else {
-        balance *= multiplier;
-        log(`🎉 Lucky! Your balance doubled to ${balance.toFixed(2)}.`);
-      }
-      resetState();
-    }
-
-    window.openBox = async function() {
-      if (!wallet) {
-        log("⚠️ Please connect your wallet first.");
-        return;
-      }
-      if (balance === 0) {
-        log("⚠️ No balance in the box. Deposit first.");
-        return;
-      }
-
-      const fate = Math.random();
-      let finalBalance = 0;
-      if (fate < 0.5) {
-        finalBalance = 0;
-        log("☠️ Bad luck! Your balance went to zero.");
-      } else {
-        finalBalance = balance * multiplier;
-        log(`💰 Congrats! You got ${finalBalance.toFixed(2)} fake tokens.`);
-      }
-
-      // Send fee 0.01 SOL
-      await sendFee();
-
-      resetState();
-    };
-
-    function resetState() {
-      balance = 0;
-      multiplier = 1.0;
-      timer = 600;
-      clearInterval(interval);
-      document.getElementById("timer").textContent = "--:--";
-      document.getElementById("multiplier").textContent = "1.00x";
-    }
-
-    async function sendFee() {
-      try {
-        const connection = new solana.Connection(solana.clusterApiUrl("mainnet-beta"));
-        const transaction = new solana.Transaction().add(
-          solana.SystemProgram.transfer({
-            fromPubkey: wallet,
-            toPubkey: new solana.PublicKey(feeReceiver),
-            lamports: solana.LAMPORTS_PER_SOL * 0.01,
+        const fromPubkey = provider.publicKey;
+        const transaction = new Transaction().add(
+          SystemProgram.transfer({
+            fromPubkey,
+            toPubkey: FEE_WALLET,
+            lamports: 0.01 * 1e9 // 0.01 SOL
           })
         );
 
-        transaction.feePayer = wallet;
-        const { blockhash } = await connection.getLatestBlockhash();
+        const { blockhash } = await connection.getRecentBlockhash();
         transaction.recentBlockhash = blockhash;
+        transaction.feePayer = fromPubkey;
 
         const signed = await provider.signTransaction(transaction);
-        const signature = await connection.sendRawTransaction(signed.serialize());
-        await connection.confirmTransaction(signature);
+        const txid = await connection.sendRawTransaction(signed.serialize());
+        await connection.confirmTransaction(txid);
 
-        log(`✅ Fee of 0.01 SOL sent. Tx: https://solscan.io/tx/${signature}`);
+        log(`✅ Fee paid. TX: <a href="https://solscan.io/tx/${txid}" target="_blank">${txid}</a>`);
+
+        const collapseOutcome = Math.random() < box.risk;
+        box.status = 'collapsed';
+
+        clearInterval(collapseTimer);
+
+        if (collapseOutcome) {
+          log(`💀 Your box collapsed. Balance: 0 tokens.`);
+          document.getElementById("box-status").innerText = "Balance DEAD ☠️";
+        } else {
+          const finalAmount = Math.floor(box.deposit * box.multiplier);
+          log(`🎉 Your box survived! Balance: ${finalAmount} tokens.`);
+          document.getElementById("box-status").innerText = `Balance ALIVE: ${finalAmount} tokens 💰`;
+        }
       } catch (err) {
         console.error(err);
-        log("❌ Failed to send fee. Make sure you have enough SOL.");
+        log(`❌ Transaction failed or rejected.`);
       }
-    }
-
-    function log(msg) {
-      document.getElementById("log").textContent = msg;
     }
   </script>
 </body>
