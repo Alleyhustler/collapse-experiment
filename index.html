@@ -1,385 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quantum Finance Experiment | Schrödinger's Coin</title>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Schrödinger's Coin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet"/>
   <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
   <style>
-    :root {
-      --primary: #2563eb;
-      --primary-dark: #1d4ed8;
-      --secondary: #06b6d4;
-      --background: #f8fafc;
-      --surface: #ffffff;
-      --surface-dark: #f1f5f9;
-      --text-primary: #0f172a;
-      --text-secondary: #64748b;
-      --border: #e2e8f0;
-      --success: #10b981;
-      --danger: #ef4444;
-      --warning: #f59e0b;
-      --border-radius: 6px;
-      --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      --transition: all 0.2s ease;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
     body {
-      font-family: "Space Grotesk", sans-serif;
-      background: var(--background);
-      color: var(--text-primary);
-      line-height: 1.5;
-      min-height: 100vh;
+      margin: 0;
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(135deg, #000000, #111111, #222222);
+      color: #00ffcc;
       display: flex;
       flex-direction: column;
-    }
-
-    .container {
-      max-width: 640px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 2rem 1rem;
-    }
-
-    header {
-      position: relative;
-      margin-bottom: 2rem;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 0.5rem;
+      align-items: center;
+      padding: 2rem;
     }
 
     h1 {
-      font-size: 1.75rem;
-      font-weight: 600;
-      color: var(--text-primary);
+      font-size: 2.5rem;
       margin-bottom: 0.5rem;
     }
 
-    .subtitle {
-      color: var(--text-secondary);
+    #box-status {
+      margin-top: 1rem;
+      font-size: 1.2rem;
+    }
+
+    .container {
+      background: #1a1a1a;
+      padding: 2rem;
+      border-radius: 20px;
+      box-shadow: 0 0 15px #00ffcc33;
+      max-width: 500px;
+      width: 100%;
+      margin-top: 2rem;
+    }
+
+    input, button {
+      padding: 0.7rem;
       font-size: 1rem;
-      font-weight: 400;
-    }
-
-    .card {
-      background: var(--surface);
-      border-radius: var(--border-radius);
-      box-shadow: var(--box-shadow);
-      border: 1px solid var(--border);
-      margin-bottom: 2rem;
-      overflow: hidden;
-    }
-
-    .card-header {
-      padding: 1.25rem 1.5rem;
-      border-bottom: 1px solid var(--border);
-      background: var(--surface-dark);
-    }
-
-    .card-title {
-      font-size: 1.125rem;
-      font-weight: 500;
-      color: var(--text-primary);
-    }
-
-    .card-body {
-      padding: 1.5rem;
-    }
-
-    .form-group {
-      margin-bottom: 1.25rem;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-      font-weight: 500;
-    }
-
-    input {
+      margin: 0.5rem 0;
       width: 100%;
-      padding: 0.75rem 1rem;
-      font-size: 0.9375rem;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--border-radius);
-      color: var(--text-primary);
-      font-family: "Space Grotesk", sans-serif;
-      transition: var(--transition);
-    }
-
-    input:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0.75rem 1.25rem;
-      font-size: 0.9375rem;
-      font-weight: 500;
-      border-radius: var(--border-radius);
-      cursor: pointer;
-      transition: var(--transition);
       border: none;
-      text-decoration: none;
-      width: 100%;
+      border-radius: 10px;
+      background-color: #111;
+      color: #00ffcc;
     }
 
-    .btn-primary {
-      background: var(--primary);
-      color: white;
+    button {
+      background: #00ffcc;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
     }
 
-    .btn-primary:hover {
-      background: var(--primary-dark);
-    }
-
-    .btn-secondary {
-      background: var(--surface);
-      color: var(--primary);
-      border: 1px solid var(--border);
-    }
-
-    .btn-secondary:hover {
-      background: var(--surface-dark);
-    }
-
-    .status-indicator {
+    #log {
+      background: #000000aa;
       padding: 1rem;
-      border-radius: var(--border-radius);
-      margin: 1.5rem 0;
-      font-size: 0.9375rem;
-      display: flex;
-      align-items: center;
-      background: var(--surface-dark);
-      border-left: 4px solid var(--text-secondary);
-    }
-
-    .status-icon {
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      margin-right: 0.75rem;
-      flex-shrink: 0;
-      background: var(--text-secondary);
-    }
-
-    .status-default {
-      border-left-color: var(--text-secondary);
-    }
-
-    .status-alive {
-      border-left-color: var(--success);
-    }
-
-    .status-alive .status-icon {
-      background: var(--success);
-    }
-
-    .status-dead {
-      border-left-color: var(--danger);
-    }
-
-    .status-dead .status-icon {
-      background: var(--danger);
-    }
-
-    .log-container {
-      background: var(--surface-dark);
-      border-radius: var(--border-radius);
-      padding: 1rem;
-      height: 200px;
+      margin-top: 1rem;
+      height: 150px;
       overflow-y: auto;
-      margin-top: 1.5rem;
-      font-family: "Space Grotesk", sans-serif;
-      font-size: 0.8125rem;
-      border: 1px solid var(--border);
-    }
-
-    .log-entry {
-      margin-bottom: 0.5rem;
-      padding-bottom: 0.5rem;
-      border-bottom: 1px solid var(--border);
-      color: var(--text-secondary);
-    }
-
-    .log-entry:last-child {
-      margin-bottom: 0;
-      border-bottom: none;
-    }
-
-    .log-time {
-      color: var(--text-secondary);
-      margin-right: 0.5rem;
-    }
-
-    .log-message {
-      word-break: break-word;
-    }
-
-    .log-success {
-      color: var(--success);
-    }
-
-    .log-error {
-      color: var(--danger);
-    }
-
-    .log-warning {
-      color: var(--warning);
-    }
-
-    .log-info {
-      color: var(--primary);
+      font-size: 0.9rem;
+      border-radius: 10px;
     }
 
     .footer {
-      text-align: center;
       margin-top: 2rem;
-      color: var(--text-secondary);
-      font-size: 0.8125rem;
-      border-top: 1px solid var(--border);
-      padding-top: 1.5rem;
-    }
-
-    .fee-info {
-      background: var(--surface-dark);
-      padding: 0.75rem;
-      border-radius: var(--border-radius);
-      margin-top: 1rem;
-      font-family: "Space Grotesk", sans-serif;
-      font-size: 0.75rem;
-      word-break: break-all;
-      border: 1px solid var(--border);
-    }
-
-    .spinner {
-      display: inline-block;
-      width: 16px;
-      height: 16px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-radius: 50%;
-      border-top-color: white;
-      animation: spin 1s ease-in-out infinite;
-      margin-left: 8px;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    a {
-      color: var(--primary);
-      text-decoration: none;
-    }
-
-    a:hover {
-      text-decoration: underline;
-    }
-
-    @media (max-width: 640px) {
-      .container {
-        padding: 1.5rem 1rem;
-      }
-      
-      .card-body {
-        padding: 1.25rem;
-      }
-    }
-
-    .top-right-logo {
-      position: absolute;
-      top: 0.01rem;
-      right: 1rem;
-      z-index: 1000;
-    }
-
-    .top-right-logo img {
-      height: 90px;
-      width: auto;
+      font-size: 0.8rem;
+      color: #999;
     }
   </style>
 </head>
 <body>
+
+  <h1>Schrödinger's Coin</h1>
+  <p>Is your balance alive... or dead?</p>
+
   <div class="container">
-    <header>
-      <h1>Schrödinger's Coin</h1>
-      <p class="subtitle">Is your balance alive... or dead?</p>
-      <div class="top-right-logo">
-        <img src="image-removebg-preview.png" alt="Logo" />
-      </div>
-    </header>
+    <label for="deposit">Enter fake token deposit (from 1B supply):</label>
+    <input type="number" id="deposit" min="1" max="1000000000" placeholder="e.g., 10000" />
 
-    <main>
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Token Superposition</div>
-        </div>
+    <button onclick="depositTokens()">Deposit</button>
+    <div id="box-status">No deposit yet.</div>
 
-        <div class="card-body">
-          <div class="form-group">
-            <label for="deposit">Enter fake token deposit (from 1B supply)</label>
-            <input type="number" id="deposit" min="1" max="1000000000" placeholder="e.g., 10000" />
-          </div>
+    <button onclick="openBox()">Open the Box</button>
+    <div id="log"></div>
+  </div>
 
-          <button class="btn btn-primary" onclick="depositTokens()">Deposit</button>
-
-          <div id="box-status" class="status-indicator status-default">
-            <div class="status-icon"></div>
-            <div class="status-text">No deposit yet</div>
-          </div>
-
-          <button class="btn btn-secondary" onclick="openBox()">Open the Box</button>
-
-          <div class="log-container" id="log">
-            <div class="log-entry">
-              <span class="log-time">[System]</span>
-              <span class="log-message">Quantum finance protocol initialized</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="footer">
-        <p>Fee: 0.01 SOL → <code>Fuq2FiyF2Q28bVfumoiAhyBdDShty1fGNoUVXvZGrK5h</code></p>
-      </div>
-    </main>
+  <div class="footer">
+    Fee: 0.01 SOL → <code>Fuq2FiyF2Q28bVfumoiAhyBdDShty1fGNoUVXvZGrK5h</code>
   </div>
 
   <script>
     const { Connection, PublicKey, clusterApiUrl, Transaction, SystemProgram } = solanaWeb3;
-    const connection = new solanaWeb3.Connection("https://rpc.helius.xyz/?api-key=a0fbabbd-6313-4713-a2f6-a4d44e60588c");
+const connection = new solanaWeb3.Connection("https://rpc.helius.xyz/?api-key=a0fbabbd-6313-4713-a2f6-a4d44e60588c");
 
     const FEE_WALLET = new PublicKey("Fuq2FiyF2Q28bVfumoiAhyBdDShty1fGNoUVXvZGrK5h");
     let box = null;
     let collapseTimer = null;
     const LOG = document.getElementById("log");
 
-    function log(message, type = 'info') {
-      const time = new Date().toLocaleTimeString();
-      const logEntry = document.createElement('div');
-      logEntry.className = 'log-entry';
-      logEntry.innerHTML = `
-        <span class="log-time">[${time}]</span>
-        <span class="log-message log-${type}">${message}</span>
-      `;
-      LOG.insertBefore(logEntry, LOG.firstChild);
-      
-      // Auto-scroll to top
-      LOG.scrollTop = 0;
+    function log(message) {
+      LOG.innerHTML = [${new Date().toLocaleTimeString()}] ${message}<br> + LOG.innerHTML;
     }
 
     async function depositTokens() {
@@ -397,11 +121,11 @@
         status: 'uncollapsed',
       };
 
-      updateStatus(`Box sealed at ${new Date(now).toLocaleTimeString()}`, 'default');
+      document.getElementById("box-status").innerText = Box sealed at ${new Date(now).toLocaleTimeString()}.;
 
       if (collapseTimer) clearInterval(collapseTimer);
       collapseTimer = setInterval(() => simulateCollapse(), 10000);
-      log(`Deposited ${amount} fake tokens. Waiting for quantum collapse...`, 'info');
+      log(Deposited ${amount} fake tokens. Waiting for quantum collapse...);
     }
 
     function simulateCollapse() {
@@ -417,18 +141,12 @@
       box.multiplier = reward;
       box.risk = risk;
 
-      log(`Box is unstable... Risk: ${(risk * 100).toFixed(1)}%, Multiplier: x${reward.toFixed(2)}`, 'warning');
-    }
-
-    function updateStatus(text, state = 'default') {
-      const statusElement = document.getElementById("box-status");
-      statusElement.className = `status-indicator status-${state}`;
-      statusElement.querySelector('.status-text').textContent = text;
+      log(Box is unstable... Risk: ${(risk * 100).toFixed(1)}%, Multiplier: x${reward.toFixed(2)});
     }
 
     async function openBox() {
       if (!box || box.status !== 'uncollapsed') {
-        log("No box to open or already opened.", 'error');
+        log("No box to open or already opened.");
         return;
       }
 
@@ -450,12 +168,6 @@
           })
         );
 
-        // Show loading state
-        const openBtn = document.querySelector('.btn-secondary');
-        const originalText = openBtn.innerHTML;
-        openBtn.innerHTML = `Processing <span class="spinner"></span>`;
-        openBtn.disabled = true;
-
         const { blockhash } = await connection.getRecentBlockhash();
         transaction.recentBlockhash = blockhash;
         transaction.feePayer = fromPubkey;
@@ -464,7 +176,7 @@
         const txid = await connection.sendRawTransaction(signed.serialize());
         await connection.confirmTransaction(txid);
 
-        log(`✅ Fee paid. TX: <a href="https://solscan.io/tx/${txid}" target="_blank">${txid}</a>`, 'success');
+        log(✅ Fee paid. TX: <a href="https://solscan.io/tx/${txid}" target="_blank">${txid}</a>);
 
         const collapseOutcome = Math.random() < box.risk;
         box.status = 'collapsed';
@@ -472,26 +184,18 @@
         clearInterval(collapseTimer);
 
         if (collapseOutcome) {
-          log(`💀 Your box collapsed. Balance: 0 tokens.`, 'error');
-          updateStatus("Balance DEAD ☠️", 'dead');
+          log(💀 Your box collapsed. Balance: 0 tokens.);
+          document.getElementById("box-status").innerText = "Balance DEAD ☠️";
         } else {
           const finalAmount = Math.floor(box.deposit * box.multiplier);
-          log(`🎉 Your box survived! Balance: ${finalAmount} tokens.`, 'success');
-          updateStatus(`Balance ALIVE: ${finalAmount} tokens 💰`, 'alive');
+          log(🎉 Your box survived! Balance: ${finalAmount} tokens.);
+          document.getElementById("box-status").innerText = Balance ALIVE: ${finalAmount} tokens 💰;
         }
       } catch (err) {
         console.error(err);
-        log(`❌ Transaction failed or rejected.`, 'error');
-      } finally {
-        // Reset button state
-        const openBtn = document.querySelector('.btn-secondary');
-        openBtn.innerHTML = 'Open the Box';
-        openBtn.disabled = false;
+        log(❌ Transaction failed or rejected.);
       }
     }
-
-    // Initialize with a system log
-    log("Quantum finance protocol ready. Deposit tokens to begin.", 'info');
   </script>
 </body>
 </html>
